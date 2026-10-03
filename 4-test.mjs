@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const script=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8').split('<script>')[1].split('</script>')[0];
+const context=vm.createContext({});
+vm.runInContext(script.split('function values()')[0],context);
+const result=context.buildPrompt({role:'Editor',task:' Review ',context:'A resume',constraints:'No invented facts',format:'Bullets'});
+assert(result.includes('TASK\nReview'));assert(result.includes('No invented facts'));assert(result.includes('QUALITY CHECK'));
+assert.throws(()=>context.buildPrompt({task:'   '}));
+assert(context.buildPrompt({role:'',task:'<script>text</script>',context:'',constraints:'',format:''}).includes('<script>text</script>'));
+console.log('PASS: structured sections, trimming, defaults, blank-task rejection and literal text.');
